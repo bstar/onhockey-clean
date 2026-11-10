@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-src 'none'">
+  <title>OnHockey Clean</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside>
+    <a class="brand" href="#" aria-label="OnHockey home"><span class="brand-icon">◒</span><span>ONHOCKEY<small>CLEAN</small></span></a>
+    <div class="nav-label">THE RINK</div>
+    <nav aria-label="Competitions">
+      <button class="nav active" data-tab="nhl"><span>◈</span> NHL <b id="nhl-count">—</b></button>
+      <button class="nav" data-tab="international"><span>◎</span> International <b id="international-count">—</b></button>
+      <button class="nav" data-tab="other"><span>▤</span> Other leagues <b id="other-count">—</b></button>
+    </nav>
+    <div class="sidebar-note"><span class="green-dot"></span> Just hockey.<p>No accounts. No popups.<br>No app analytics.</p></div>
+    <button class="privacy-button" id="privacy-button">♧ &nbsp; Protection details</button>
+    <div class="sidebar-footer">INDEPENDENT DESKTOP PLAYER</div>
+  </aside>
+  <main>
+    <header><div class="breadcrumb">THE RINK <span>/</span> <strong id="breadcrumb">NHL</strong></div><div class="header-right"><span id="clock"></span><span class="protection"><span class="green-dot"></span> Protection on</span></div></header>
+    <section class="page-heading"><div><div class="eyebrow">LESS NOISE. MORE HOCKEY.</div><h1 id="page-title">Your seat at the rink.</h1><p id="page-description">NHL up front. Pick a game, choose a feed, settle in.</p></div><button id="refresh" class="button subtle" title="Refresh listings and the current stream (Ctrl+R or F5)">↻ &nbsp; Refresh everything</button></section>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <section class="watch-section" aria-label="Player">
+      <div class="watch-toolbar"><span><span class="green-dot"></span> <strong id="watch-label">READY WHEN YOU ARE</strong></span><div><button id="refresh-player" class="text-button" title="Refresh everything (Ctrl+R or F5)">↻ Refresh all</button><button id="next-source" class="text-button" disabled>Next source →</button><button id="fullscreen" class="text-button" disabled>⛶ &nbsp; Theater</button><button id="stop" class="text-button" disabled>Close ✕</button></div></div>
+      <div id="player-slot"><div id="player-empty"><div class="rink"><div class="center-circle"></div><div class="center-line"></div><div class="blue-line left"></div><div class="blue-line right"></div><div class="puck"></div></div><h2>The ice is yours.</h2><p>Select a game below to start watching.</p><span>ONE PLAYER. ALL YOUR FEEDS.</span></div></div>
+      <div class="player-bottom"><div><strong id="playing-title">Nothing between you and the game.</strong><p id="playing-detail">Stream links appear as providers make them available.</p></div><span class="quiet-tag">♧ &nbsp; Popups blocked</span></div>
+      <div id="sources" aria-label="Stream sources" hidden></div>
+      <div id="player-message" role="status" hidden></div>
+    </section>
+    <section class="schedule-section">
+      <div class="schedule-heading"><div><h2 id="schedule-title">NHL schedule <span id="game-count"></span></h2><p id="updated">Fetching the latest listings…</p></div><div class="filters"><label class="search"><span>⌕</span><input type="search" id="search" placeholder="Find a team or league" aria-label="Find a team or league"></label><label class="available"><input type="checkbox" id="available"> With feeds</label></div></div>
+      <div id="league-filters" hidden></div>
+      <div class="list-heading"><span>GAME / COMPETITION</span><span>LOCAL TIME</span><span>STREAMS</span></div>
+      <div id="games" aria-live="polite"><div class="empty-state"><h3>Getting the schedule…</h3><p>Only game data is loaded. The source website’s ads stay behind.</p></div></div>
+    </section>
+    <footer><span>Hockey, without the clutter.</span><span>Listings from onhockey.tv · Times shown in <span id="timezone"></span></span></footer>
+  </main>
+  <dialog id="privacy-dialog"><div class="dialog-heading"><h2>Protection details</h2><button id="close-privacy" aria-label="Close protection details">✕</button></div><p>Advertising and tracking requests are filtered inside the player. Popups, downloads, notifications, camera, microphone, and location requests are blocked.</p><dl><dt>Filter lists</dt><dd id="filter-status">Loading…</dd><dt>Blocked requests this session</dt><dd id="blocked-count">0</dd><dt>Player storage</dt><dd>Memory only. Cleared when you close the app.</dd></dl><p class="muted">Third-party stream hosts still receive your IP address and the requests needed to play their video. Filtering cannot guarantee removal of every ad, especially ads included in the broadcast. No feeds are loaded until you select one.</p></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

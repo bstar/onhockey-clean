@@ -1,0 +1,15 @@
+! OnHockey Clean supplemental filters
+||debitm.org^
+||doubleclick.net^
+||googlesyndication.com^
+||google-analytics.com^
+||googletagmanager.com^
+||popads.net^
+||popcash.net^
+||histats.com^
+||statcounter.com^
+||mc.yandex.ru^
+! Tracking pixel and recurring visitor-ID requests observed in embedsports embeds
+||shop.lbeato.store^
+! Advertising script observed in the same embed
+||ji.parkerwarmful.qpon^

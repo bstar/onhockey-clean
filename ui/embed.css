@@ -1,0 +1,3 @@
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090c0f}
+body{display:grid;place-items:center}
+iframe{display:block;border:0;width:min(100vw,calc(100vh * var(--video-aspect,1.777777778)));height:min(100vh,calc(100vw / var(--video-aspect,1.777777778)))}
