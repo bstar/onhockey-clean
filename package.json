@@ -1,8 +1,8 @@
 {
   "name": "onhockey-clean",
   "productName": "OnHockey Clean",
-  "version": "0.1.0",
-  "description": "A quiet, NHL-first hockey stream desktop app",
+  "version": "0.2.0",
+  "description": "Hockey streams, live NHL scores, and background feed ratings",
   "main": "electron/main.cjs",
   "license": "MIT",
   "scripts": {
@@ -12,7 +12,11 @@
     "build": "electron-builder --linux dir",
     "appimage": "electron-builder --linux AppImage",
     "test:layout": "node tests/layout.cjs",
-    "test:refresh": "node tests/refresh.cjs"
+    "test:refresh": "node tests/refresh.cjs",
+    "test:scores": "node tests/scores-ui.cjs",
+    "test:profiler": "node tests/profiler.cjs",
+    "release:build": "electron-builder --publish never",
+    "test:package": "node scripts/smoke-packaged.cjs"
   },
   "build": {
     "appId": "local.onhockey.clean",
@@ -35,7 +39,30 @@
       "executableName": "onhockey-clean",
       "syncDesktopName": true
     },
-    "artifactName": "OnHockey-Clean-${version}.${ext}"
+    "artifactName": "OnHockey-Clean-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.sports",
+      "icon": "assets/icon.png",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "identity": "-",
+      "hardenedRuntime": false,
+      "notarize": false
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.20.1",

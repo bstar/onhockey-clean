@@ -40,7 +40,7 @@ const path = require('node:path');
     await page.locator('#search').fill('Columbus');
     await page.locator('.watch:not(:disabled)').click();
     await idle();
-    const playerId = () => app.evaluate(({ BrowserWindow }) => { const win = BrowserWindow.getAllWindows()[0]; return win.contentView.children.find(v => v.webContents && v.webContents !== win.webContents)?.webContents.id; });
+    const playerId = () => app.evaluate(({ BrowserWindow }) => { const win = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html'); return win.contentView.children.find(v => v.webContents && v.webContents !== win.webContents)?.webContents.id; });
     const before = await playerId();
     assert.ok(before);
     await app.evaluate(async ({ session }) => { await session.fromPartition('hockey-player').cookies.set({ url: 'https://embedsports.me', name: 'session-test', value: 'kept' }); });
@@ -52,7 +52,7 @@ const path = require('node:path');
     assert.equal(await page.locator('#playing-title').textContent(), 'Columbus - Minnesota Wild');
     assert.match(await page.locator('.source.selected').textContent(), /2\. plytvme/);
     const info = await app.evaluate(async ({ BrowserWindow, session }) => {
-      const win = BrowserWindow.getAllWindows()[0];
+      const win = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html');
       const view = win.contentView.children.find(v => v.webContents && v.webContents !== win.webContents);
       const deadline = Date.now() + 10000;
       while (!view.webContents.getURL() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20));

@@ -5,12 +5,16 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { ElectronBlocker, fromElectronDetails } = require('@ghostery/adblocker-electron');
 const { parseSchedule, publicUrl, ORIGIN } = require('../lib/schedule.cjs');
+const { createStreamProfiler } = require('./stream-profiler.cjs');
+const fetchScores = require('../lib/scores.cjs').createScoreFetcher();
 
 if (process.env.ONHOCKEY_PROFILE) app.setPath('userData', path.resolve(process.env.ONHOCKEY_PROFILE));
 if (process.argv.includes('--version')) { console.log(`OnHockey Clean ${app.getVersion()}`); app.exit(0); }
 protocol.registerSchemesAsPrivileged([{ scheme: 'hockey', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }]);
+let profiler, probeSession;
 let win, player, playerSession, blocker, schedule, inFlight, activeSource, activeGame, mediaTimer, refreshInFlight;
 const mediaFitScript = fs.readFileSync(path.join(__dirname, 'media-fit.js'), 'utf8');
+const latencyScript = fs.readFileSync(path.join(__dirname, 'media-latency.js'), 'utf8');
 let blocked = 0, keepAwake, currentBounds, modal = false, generation = 0, htmlFullscreen = false;
 let filterStatus = 'Bundled EasyList + EasyPrivacy + site filters';
 const root = path.join(__dirname, '..');
@@ -112,10 +116,12 @@ function openSource(source, game) {
     measuring = true;
     try {
       const frames = contents.mainFrame.framesInSubtree.filter(frame => /^(https?:|hockey:)/.test(frame.url));
-      const results = await Promise.allSettled(frames.map(frame => frame.executeJavaScript(mediaFitScript)));
+      const results = await Promise.allSettled(frames.map(frame => frame.executeJavaScript(`(() => { const size = ${mediaFitScript}; const video = [...document.querySelectorAll('video')].find(v => v.videoWidth === size?.width && v.videoHeight === size?.height); return size ? { ...size, delay: (${latencyScript})(video) } : null; })()`)));
       if (token !== generation || contents.isDestroyed()) return;
       const size = results.find(result => result.status === 'fulfilled' && result.value?.width && result.value?.height)?.value;
-      if (!size || `${size.width}x${size.height}` === lastVideoSize) return;
+      if (!size) return;
+      send({ type: 'latency', delay: size.delay });
+      if (`${size.width}x${size.height}` === lastVideoSize) return;
       lastVideoSize = `${size.width}x${size.height}`;
       await contents.executeJavaScript(`document.documentElement.style.setProperty('--video-aspect', '${size.width / size.height}')`);
       send({ type: 'dimensions', ...size });
@@ -158,7 +164,7 @@ function installFilters(lists, label) {
   filterStatus = label;
   blocker.enableBlockingInSession(playerSession);
   // Preserve Ghostery's cosmetic filtering and CSP hooks, with one combined network pipeline.
-  playerSession.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
+  for (const ses of [playerSession, probeSession]) ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
     const url = new URL(details.url);
     if (url.protocol === 'hockey:') return callback({});
     if (!['http:', 'https:', 'ws:', 'wss:', 'blob:', 'data:'].includes(url.protocol)) { blocked++; return callback({ cancel: true }); }
@@ -241,7 +247,7 @@ async function refreshEverything(gameId, sourceUrl) {
   return refreshInFlight;
 }
 async function createWindow() {
-  win = new BrowserWindow({ width: 1380, height: 990, minWidth: 900, minHeight: 650, backgroundColor: '#101215', title: 'OnHockey Clean', icon: path.join(root, 'assets/icon.png'), autoHideMenuBar: true, webPreferences: {
+  win = new BrowserWindow({ width: 1380, height: 990, minWidth: 900, minHeight: 650, backgroundColor: '#101215', title: 'Hockey', icon: path.join(root, 'assets/icon.png'), autoHideMenuBar: true, webPreferences: {
     preload: path.join(__dirname, 'preload.cjs'), sandbox: true, contextIsolation: true, nodeIntegration: false,
   } });
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -249,7 +255,7 @@ async function createWindow() {
   win.webContents.on('before-input-event', refreshShortcut);
   win.on('resize', positionPlayer);
   win.on('leave-full-screen', () => { htmlFullscreen = false; send({ theater: false }); positionPlayer(); });
-  win.on('close', stopPlayer);
+  win.on('close', () => { profiler?.close(); stopPlayer(); });
   win.on('closed', () => { win = null; });
   await win.loadURL(`${uiOrigin}index.html`);
 }
@@ -262,8 +268,20 @@ app.whenReady().then(async () => {
   playerSession.setPermissionRequestHandler((_wc, permission, callback) => callback(permission === 'fullscreen'));
   playerSession.setPermissionCheckHandler((_wc, permission) => permission === 'fullscreen');
   playerSession.on('will-download', event => { blocked++; event.preventDefault(); });
+  probeSession = session.fromPartition('hockey-profiler', { cache: false });
+  registerFiles(probeSession);
+  probeSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+  probeSession.setPermissionCheckHandler(() => false);
+  probeSession.on('will-download', event => event.preventDefault());
   await loadFilters();
+  profiler = createStreamProfiler({ BrowserWindow, session: probeSession, onResult: result => send({ type: 'profile', result }) });
+  handle('profile', ids => {
+    if (!Array.isArray(ids) || ids.length > 3 || ids.some(id => typeof id !== 'string')) throw new Error('Invalid game selection');
+    const games = ids.map(id => schedule?.games.find(game => game.id === id) || (activeGame?.id === id ? activeGame : null)).filter(Boolean);
+    return profiler.setSources(games.flatMap(game => game.sources));
+  });
   handle('schedule', fetchSchedule);
+  handle('scores', fetchScores);
   handle('refresh-all', refreshEverything);
   handle('play', play);
   handle('stop', () => { stopPlayer(); win.setFullScreen(false); });
@@ -279,4 +297,5 @@ app.whenReady().then(async () => {
   updateFilters().catch(error => console.warn(`Using existing filter lists: ${error.message}`));
   app.on('activate', () => { if (!win) createWindow(); });
 }).catch(error => { console.error(error); app.exit(1); });
+app.on('before-quit', () => profiler?.close());
 app.on('window-all-closed', () => app.quit());

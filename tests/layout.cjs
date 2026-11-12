@@ -29,7 +29,7 @@ const path = require('node:path');
     async function check(label) {
       await page.waitForTimeout(250);
       const frames = await app.evaluate(async ({ BrowserWindow }) => {
-        const win = BrowserWindow.getAllWindows()[0];
+        const win = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html');
         const view = win.contentView.children.find(v => v.webContents && v.webContents !== win.webContents);
         const frames = [];
         for (const frame of view.webContents.mainFrame.framesInSubtree) {
@@ -56,7 +56,7 @@ const path = require('node:path');
       await check(`16:9 ${viewport.width}x${viewport.height}`);
     }
     await app.evaluate(async ({ BrowserWindow }, standard) => {
-      const win = BrowserWindow.getAllWindows()[0];
+      const win = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html');
       const view = win.contentView.children.find(v => v.webContents && v.webContents !== win.webContents);
       for (const frame of view.webContents.mainFrame.framesInSubtree) {
         if (!/^https:/.test(frame.url)) continue;

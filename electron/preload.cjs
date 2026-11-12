@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('hockey', {
   schedule: () => ipcRenderer.invoke('schedule'),
+  profile: ids => ipcRenderer.invoke('profile', ids),
+  scores: date => ipcRenderer.invoke('scores', date),
   refreshAll: (gameId, sourceUrl) => ipcRenderer.invoke('refresh-all', gameId, sourceUrl),
   play: (gameId, sourceIndex) => ipcRenderer.invoke('play', gameId, sourceIndex),
   stop: () => ipcRenderer.invoke('stop'),

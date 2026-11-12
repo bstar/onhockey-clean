@@ -28,7 +28,7 @@ const path = require('node:path');
     await page.waitForFunction(() => document.querySelectorAll('.source').length > 0);
     // Embedded providers must be child frames: several reject top-level documents.
     await app.evaluate(async ({ BrowserWindow }) => {
-      const win = BrowserWindow.getAllWindows()[0];
+      const win = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html');
       const view = win.contentView.children.find(v => v.webContents && v.webContents !== win.webContents);
       const wc = view.webContents;
       const deadline = Date.now() + 15000;
@@ -49,7 +49,7 @@ const path = require('node:path');
       await page.waitForFunction(() => document.querySelectorAll('.source')[1]?.classList.contains('selected'));
     }
     await app.evaluate(({ BrowserWindow }) => {
-      const window = BrowserWindow.getAllWindows()[0];
+      const window = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html');
       const player = window.contentView.children.find(view => view.webContents && view.webContents !== window.webContents);
       if (!player) throw new Error('No native isolated player');
       const preferences = player.webContents.getLastWebPreferences();
@@ -64,7 +64,7 @@ const path = require('node:path');
       }
     });
     await app.evaluate(async ({ BrowserWindow }) => {
-      const window = BrowserWindow.getAllWindows()[0];
+      const window = BrowserWindow.getAllWindows().find(window => window.webContents.getURL() === 'hockey://app/index.html');
       const player = window.contentView.children.find(view => view.webContents && view.webContents !== window.webContents);
       if (player.webContents.isLoading()) {
         const stopped = new Promise(resolve => player.webContents.once('did-stop-loading', resolve));
